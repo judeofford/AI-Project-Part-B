@@ -19,6 +19,11 @@ class Player:
         Called at the beginning of your turn. Based on the current state
         of the game, select an action to play.
         """
+        while True:
+            r = randrange(10)
+            q = randrange(10)
+            if self.board[r][q] == None:
+                return("PLACE", r, q)
                         
                 
                     
