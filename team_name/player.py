@@ -1,3 +1,4 @@
+from audioop import minmax
 from random import randrange
 
 class Player:
@@ -13,14 +14,80 @@ class Player:
         self.colour = player
         self.size = n
         self.board = [[None for i in range(n)] for m in range(n)]
+        
+      
 
     def action(self):
         """
         Called at the beginning of your turn. Based on the current state
         of the game, select an action to play.
         """
+       
+        # if self.colour == "red": 
+        #     return ("PLACE",2,1)
+        # else:
+        #     return ("PLACE",3,2)
+
+       
+            
+
+        
+        
+        print("this board is ", type(self.board[2][1]))
+        def minimax(board, depth, isMax,self):
+            #if this is the maximizer turn
+            #need something to detect win here
+            #need an evaluation function
+          
+            if (isMax):
+                best = -1000
+
+                for i in range(self.size):
+                    for j in range(self.size):
+                        if board[i][j] == None:
+                            board[i][j] = "r"
+
+                            best = max(best, minimax(board,depth+1,not isMax,self))
+
+                            board[i][j] = None
+                return best
+            else:
+                best = 1000
+                for i in range(self.size):
+                    for j in range(self.size):
+                        if board[i][j] == None:
+                            board[i][j] = "b"
+                            best = min(best, minimax(board, depth + 1, not isMax, self))
+                            board[i][j] = None
+                return best
                         
+        def findBestMove(board,self):
+            bestVal = -1000
+            bestMove = (-1,-1)
+            
+            print(self.size)
+            for i in range(self.size):
                 
+                for j in range(self.size):
+                   
+                    if (board[i][j] == None):
+                      
+                        board[i][j] = "red"
+                        
+                        moveVal = minimax(board, 0 ,False,self)
+                        
+                        board[i][j] = None
+                        if (moveVal > bestVal):
+                            bestMove = (i,j)
+                            bestVal = moveVal
+
+            return bestMove
+
+
+        # bestMove = findBestMove(self.board,self)
+        # print("best move is",bestMove)
+
+        return ("PLACE",2,1)    
                     
     def turn(self, player, action):
         """
@@ -122,8 +189,20 @@ class Player:
 
         for i in range(len(captured)):
             self.board[captured[i][0]][captured[i][1]] = None
-        
+
+     
         for i in range(self.size-1, -1, -1):
+            
             print (self.board[i])
+
+
+    
+
+
+                 
+
+ 
+    
+
         
 
