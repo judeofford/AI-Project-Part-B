@@ -20,8 +20,8 @@ class Player:
         of the game, select an action to play.
         """
         while True:
-            r = randrange(10)
-            q = randrange(10)
+            r = randrange(self.size)
+            q = randrange(self.size)
             if self.board[r][q] == None:
                 return("PLACE", r, q)
                         
@@ -127,8 +127,5 @@ class Player:
 
         for i in range(len(captured)):
             self.board[captured[i][0]][captured[i][1]] = None
-        
-        for i in range(self.size-1, -1, -1):
-            print (self.board[i])
         
 

@@ -28,16 +28,99 @@ class Player:
         # else:
         #     return ("PLACE",3,2)
 
-       
+        def getNeighbours(self, board, row, column, colour):
+            arr = []
             
+            if row+1 < self.size:
+                if board[row+1][column] == colour:
+                    arr.append((row+1, column))
+            if row-1 > -1:
+                if board[row-1][column] == colour:
+                    arr.append((row-1, column))
+            if column+1 < self.size:
+                if board[row][column+1] == colour:
+                    arr.append((row, column+1))
+            if column-1 > -1:
+                if board[row][column-1] == colour:
+                    arr.append((row, column-1))
+            if row-1 > -1 and column+1 < self.size:
+                if board[row-1][column+1] == colour:
+                    arr.append((row-1, column+1))
+            if row+1 < self.size and column-1 > -1:
+                if board[row+1][column-1] == colour:
+                    arr.append((row+1, column-1))
+            
+            return arr
+
+
+        def checkLine(self, board, row, column, colour, checked):
+            if colour == "red" and row == self.size - 1: #checks if on the final row for red
+                return True
+            elif colour == "blue" and column == self.size - 1: #checks if on the final column for blue
+                return True
+            
+            checked.append((row, column))
+            
+            neighbours = getNeighbours(self, board, row, column, colour)
+            
+            #if not at endpoint, move to first unchecked neighbour
+            for i in range(len(neighbours)):
+                if ((neighbours[i][0], neighbours[i][1]) not in checked): 
+                    if checkLine(self, board, neighbours[i][0], neighbours[i][1], colour, checked):
+                        return True
+            return False
+
+
+        def isMovesLeft(board, self):
+            for i in range (self.size):
+                for j in range (self.size):
+                    if self.board[i][j] == None:
+                        return True
+            return False
+
+       
+        def evaluate(board, self):
+            checked = []
+            for i in range(self.size): #checks for any red winning line starting from the bottom row
+                if board[0][i] == "red":
+                    line = checkLine(self, board, 0, i, "red", checked)
+                    if line == True and self.colour == "red":
+                        return 10
+                    if line == True and self.colour == "blue":
+                        return -10
+                        
+            for j in range(self.size): #checks for any blue winning line starting from the leftmost column
+                if board[j][0] == "blue":
+                    line = checkLine(self, board, j, 0, "blue", checked)
+                    if line == True and self.colour == "blue":
+                        return 10
+                    if line == True and self.colour == "red":
+                        return -10
+    
+            return 0 #if no lines found, return 0.
 
         
-        
-        print("this board is ", type(self.board[2][1]))
-        def minimax(board, depth, isMax,self):
+        def minimax(board, depth, isMax, self):
             #if this is the maximizer turn
             #need something to detect win here
             #need an evaluation function
+            
+            playerToMax = self.colour
+            if self.colour == "red":
+                playerToMin = "blue"
+            elif self.colour == "blue":
+                playerToMin = "red"
+
+            score = evaluate(board, self)
+            
+            if score == 10:
+                return score
+
+            if score == -10:
+                return score
+
+            if isMovesLeft(board, self) == False:
+                return 0
           
             if (isMax):
                 best = -1000
@@ -45,49 +128,54 @@ class Player:
                 for i in range(self.size):
                     for j in range(self.size):
                         if board[i][j] == None:
-                            board[i][j] = "r"
-
+                            board[i][j] = playerToMax
                             best = max(best, minimax(board,depth+1,not isMax,self))
 
                             board[i][j] = None
                 return best
+
             else:
                 best = 1000
                 for i in range(self.size):
                     for j in range(self.size):
                         if board[i][j] == None:
-                            board[i][j] = "b"
+                            board[i][j] = playerToMin
                             best = min(best, minimax(board, depth + 1, not isMax, self))
                             board[i][j] = None
                 return best
                         
         def findBestMove(board,self):
+            playerToMax = self.colour
+                
             bestVal = -1000
             bestMove = (-1,-1)
             
-            print(self.size)
+ 
             for i in range(self.size):
                 
                 for j in range(self.size):
                    
                     if (board[i][j] == None):
                       
-                        board[i][j] = "red"
+                        board[i][j] = playerToMax
                         
-                        moveVal = minimax(board, 0 ,False,self)
+                        moveVal = minimax(board, 0, False, self)
+                        
                         
                         board[i][j] = None
                         if (moveVal > bestVal):
                             bestMove = (i,j)
                             bestVal = moveVal
+                        print("checking move: ", (i,j))
+                        print("value: ", moveVal, "\n")
 
             return bestMove
 
 
-        # bestMove = findBestMove(self.board,self)
-        # print("best move is",bestMove)
 
-        return ("PLACE",2,1)    
+        bestMove = findBestMove(self.board,self)
+        print("best move is", bestMove)
+        return ("PLACE",bestMove[0],bestMove[1])    
                     
     def turn(self, player, action):
         """
@@ -189,11 +277,6 @@ class Player:
 
         for i in range(len(captured)):
             self.board[captured[i][0]][captured[i][1]] = None
-
-     
-        for i in range(self.size-1, -1, -1):
-            
-            print (self.board[i])
 
 
     
