@@ -200,7 +200,7 @@ class Player:
                         board[i][j] = playerToMax
                         
 
-                        moveVal = minimax(board, 3, True, self,MIN,MAX)
+                        moveVal = minimax(board, 0, True, self,MIN,MAX)
                         
                       
                         
@@ -208,8 +208,8 @@ class Player:
                         if (moveVal > bestVal):
                             bestMove = (i,j)
                             bestVal = moveVal
-                        print("checking move: ", (i,j))
-                        print("value: ", moveVal, "\n")
+                        # print("checking move: ", (i,j))
+                        # print("value: ", moveVal, "\n")
                        
                         
 
