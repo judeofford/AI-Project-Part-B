@@ -1,5 +1,8 @@
 from audioop import minmax
 from random import randrange
+import math
+
+
 
 class Player:
     def __init__(self, player, n):
@@ -98,12 +101,30 @@ class Player:
                         return -10
     
             return 0 #if no lines found, return 0.
-
-        
-        def minimax(board, depth, isMax, self):
-            #if this is the maximizer turn
-            #need something to detect win here
-            #need an evaluation function
+        def heuristic_coneccted(game,board, player):
+            oponent="blue" if player=="red" else "blue"
+    
+            ccp=countBetterConnected(game,board,player)
+            cco=countBetterConnected(game,board,oponent)
+    
+            return (cco-ccp)/(max(ccp,cco)+1)
+        def countBetterConnected(game,board, player):
+            counted = set()
+            connected = 0
+    
+            for i in range(game.size):
+                for j in range(game.size):
+                    if board[i][j] == player:
+                        neighbors = getNeighbours(game,board,i,j,player)
+                        for n in neighbors:
+                            r, c= n
+                            if board[i][j] == player and n not in counted:
+                                counted.add((r,c))
+                                connected += 1
+            return connected    
+        MAX, MIN = 1000, -1000
+        def minimax(board, depth, isMax, self, alpha,beta):
+            
             
             playerToMax = self.colour
             if self.colour == "red":
@@ -111,46 +132,65 @@ class Player:
             elif self.colour == "blue":
                 playerToMin = "red"
 
-            score = evaluate(board, self)
+         
+            score = heuristic_coneccted(self,board, self.colour)
             
-            if score == 10:
-                return score
+            # if score == 10:
+            #     return score
 
-            if score == -10:
-                return score
+            # if score == -10:
+            #     return score
 
             if isMovesLeft(board, self) == False:
-                return 0
+                return score
+            if not depth:
+                return score    
+            
           
             if (isMax):
-                best = -1000
+                best = -math.inf
+                
 
                 for i in range(self.size):
                     for j in range(self.size):
                         if board[i][j] == None:
                             board[i][j] = playerToMax
-                            best = max(best, minimax(board,depth+1,not isMax,self))
-
+                            #change here
+                            best = max(best, minimax(board,depth-1,False,self,alpha,beta))
+                            alpha = max(best,alpha)
+                           
                             board[i][j] = None
+                            if beta <= alpha:
+                                
+                                break
+                            
                 return best
 
             else:
-                best = 1000
+                best =  math.inf
                 for i in range(self.size):
                     for j in range(self.size):
                         if board[i][j] == None:
                             board[i][j] = playerToMin
-                            best = min(best, minimax(board, depth + 1, not isMax, self))
+                            best = min(best, minimax(board, depth -1,  True, self,alpha,beta))
                             board[i][j] = None
+                            beta = min(beta,best)
+                            if beta <= alpha:
+                                
+                                break
+                            
+
                 return best
-                        
-        def findBestMove(board,self):
-            playerToMax = self.colour
+       
+        
                 
-            bestVal = -1000
+                        
+        def findBestMove(board,self,alpha,beta):
+            playerToMax = self.colour
+                  
+            bestVal = -math.inf
             bestMove = (-1,-1)
-            
- 
+             
             for i in range(self.size):
                 
                 for j in range(self.size):
@@ -159,8 +199,10 @@ class Player:
                       
                         board[i][j] = playerToMax
                         
-                        moveVal = minimax(board, 0, False, self)
+
+                        moveVal = minimax(board, 3, True, self,MIN,MAX)
                         
+                      
                         
                         board[i][j] = None
                         if (moveVal > bestVal):
@@ -168,12 +210,14 @@ class Player:
                             bestVal = moveVal
                         print("checking move: ", (i,j))
                         print("value: ", moveVal, "\n")
+                       
+                        
 
             return bestMove
 
 
 
-        bestMove = findBestMove(self.board,self)
+        bestMove = findBestMove(self.board,self,-math.inf,math.inf)
         print("best move is", bestMove)
         return ("PLACE",bestMove[0],bestMove[1])    
                     
