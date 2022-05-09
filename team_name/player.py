@@ -1,5 +1,6 @@
 from audioop import minmax
 from random import randrange
+from queue import PriorityQueue
 import math
 
 
@@ -35,6 +36,24 @@ class Player:
             arr = []
             
             if row+1 < self.size:
+                arr.append((row+1, column))
+            if row-1 > -1:
+                arr.append((row-1, column))
+            if column+1 < self.size:
+                arr.append((row, column+1))
+            if column-1 > -1:
+                arr.append((row, column-1))
+            if row-1 > -1 and column+1 < self.size:
+                arr.append((row-1, column+1))
+            if row+1 < self.size and column-1 > -1:
+                arr.append((row+1, column-1))
+        
+            return arr
+
+        def getColourNeighbours(self, board, row, column, colour):
+            arr = []
+            
+            if row+1 < self.size:
                 if board[row+1][column] == colour:
                     arr.append((row+1, column))
             if row-1 > -1:
@@ -64,7 +83,7 @@ class Player:
             
             checked.append((row, column))
             
-            neighbours = getNeighbours(self, board, row, column, colour)
+            neighbours = getColourNeighbours(self, board, row, column, colour)
             
             #if not at endpoint, move to first unchecked neighbour
             for i in range(len(neighbours)):
@@ -74,6 +93,40 @@ class Player:
             return False
 
 
+        def dijkstra(self, board, start_node, visited, colour):
+            D = {}
+            for i in range(len(board)):
+                for j in range(len(board)):
+                    D[(i,j)] = float('inf')
+            D[start_node] = 0
+
+            pq = PriorityQueue()
+            pq.put((0, start_node))
+
+            while not pq.empty():
+                (dist, current_node) = pq.get()
+                visited.append(current_node)
+                neighbours = getNeighbours(self, board, current_node[0], current_node[1], colour)
+                for i in range(len(neighbours)):
+                    if board[neighbours[i][0]][neighbours[i][1]] == colour:
+                        distance = 0
+                        if neighbours[i] not in visited:
+                            old_cost = D[neighbours[i]]
+                            new_cost = D[current_node] + distance
+                            if new_cost < old_cost:
+                                pq.put((new_cost, neighbours[i]))
+                                D[neighbours[i]] = new_cost
+                    if board[neighbours[i][0]][neighbours[i][1]] == None:
+                        distance = 1
+                        if neighbours[i] not in visited:
+                            old_cost = D[neighbours[i]]
+                            new_cost = D[current_node] + distance
+                            if new_cost < old_cost:
+                                pq.put((new_cost, neighbours[i]))
+                                D[neighbours[i]] = new_cost
+            return D
+
+
         def isMovesLeft(board, self):
             for i in range (self.size):
                 for j in range (self.size):
@@ -81,33 +134,75 @@ class Player:
                         return True
             return False
 
-       
+
         def evaluate(board, self):
             checked = []
             for i in range(self.size): #checks for any red winning line starting from the bottom row
                 if board[0][i] == "red":
                     line = checkLine(self, board, 0, i, "red", checked)
                     if line == True and self.colour == "red":
-                        return 10
+                        return 100
                     if line == True and self.colour == "blue":
-                        return -10
+                        return -100
                         
             for j in range(self.size): #checks for any blue winning line starting from the leftmost column
                 if board[j][0] == "blue":
                     line = checkLine(self, board, j, 0, "blue", checked)
                     if line == True and self.colour == "blue":
-                        return 10
+                        return 100
                     if line == True and self.colour == "red":
-                        return -10
-    
-            return 0 #if no lines found, return 0.
+                        return -100
+            return 0
+
+        
+        def newHeuristic(self, board):
+            redShortest = 1000
+            blueShortest = 1000
+            
+            for i in range(self.size):
+                start = (0, i) #red start points, bottom row
+                visited = []
+
+                #generate distances from start point to all nodes
+                distances = dijkstra(self, board, start, visited, "red")
+                
+                for j in range(self.size):
+                    end = (self.size - 1, j) #red end points, top row
+                    #find the shortest distance to any end node
+                    if distances[end] < redShortest:
+                        redShortest = distances[end]
+                        
+            for i in range(self.size):
+                start = (i, 0) #blue start points, leftmost column
+                visited = []
+
+                #generate distances from start point to all nodes
+                distances = dijkstra(self, board, start, visited, "blue")
+                
+                for j in range(self.size):
+                    end = (j, self.size - 1) #blue end points, rightmost column
+                    #find the shortest distance to any end node
+                    if distances[end] < blueShortest:
+                        blueShortest = distances[end]
+
+            if self.colour == "red":
+                score = blueShortest - redShortest
+                return score
+
+            if self.colour == "blue":
+                score = redShortest - blueShortest
+                return score     
+            
+        
         def heuristic_coneccted(game,board, player):
             oponent="blue" if player=="red" else "blue"
     
             ccp=countBetterConnected(game,board,player)
             cco=countBetterConnected(game,board,oponent)
     
+
             return (cco-ccp)/(max(ccp,cco)+1)
+        
         def countBetterConnected(game,board, player):
             counted = set()
             connected = 0
@@ -121,10 +216,11 @@ class Player:
                             if board[i][j] == player and n not in counted:
                                 counted.add((r,c))
                                 connected += 1
-            return connected    
+            return connected
+
+        
         MAX, MIN = 1000, -1000
-        def minimax(board, depth, isMax, self, alpha,beta):
-            
+        def minimax(board, depth, isMax, self, alpha, beta):
             
             playerToMax = self.colour
             if self.colour == "red":
@@ -132,10 +228,9 @@ class Player:
             elif self.colour == "blue":
                 playerToMin = "red"
 
-         
-            score = heuristic_coneccted(self,board, self.colour)
+            score = newHeuristic(self, board)
             
-            # if score == 10:
+            # if score > 10:
             #     return score
 
             # if score == -10:
@@ -144,13 +239,12 @@ class Player:
             if isMovesLeft(board, self) == False:
                 return score
             if not depth:
-                return score    
+                return score
             
           
             if (isMax):
                 best = -math.inf
                 
-
                 for i in range(self.size):
                     for j in range(self.size):
                         if board[i][j] == None:
@@ -158,10 +252,8 @@ class Player:
                             #change here
                             best = max(best, minimax(board,depth-1,False,self,alpha,beta))
                             alpha = max(best,alpha)
-                           
                             board[i][j] = None
                             if beta <= alpha:
-                                
                                 break
                             
                 return best
@@ -172,11 +264,10 @@ class Player:
                     for j in range(self.size):
                         if board[i][j] == None:
                             board[i][j] = playerToMin
-                            best = min(best, minimax(board, depth -1,  True, self,alpha,beta))
+                            best = min(best, minimax(board, depth -1,True,self,alpha,beta))
                             board[i][j] = None
                             beta = min(beta,best)
                             if beta <= alpha:
-                                
                                 break
                             
 
@@ -199,17 +290,25 @@ class Player:
                       
                         board[i][j] = playerToMax
                         
+                        moveVal = minimax(board, 3, False, self,MIN,MAX)
 
-                        moveVal = minimax(board, 3, True, self,MIN,MAX)
-                        
-                      
-                        
+                        checked = []
+                        line = False
+                        if playerToMax == "red":
+                            for x in range(self.size):
+                                if board[0][x] == "red":
+                                    line = checkLine(self, board, 0, x, "red", checked)
+                        if playerToMax == "blue":
+                            for x in range(self.size):
+                                if board[x][0] == "blue":
+                                    line = checkLine(self, board, x, 0, "blue", checked)
+                        if line == True:
+                            moveVal = 9999
+                                    
                         board[i][j] = None
                         if (moveVal > bestVal):
                             bestMove = (i,j)
                             bestVal = moveVal
-                        print("checking move: ", (i,j))
-                        print("value: ", moveVal, "\n")
                        
                         
 
