@@ -309,6 +309,9 @@ class Player:
                         if (moveVal > bestVal):
                             bestMove = (i,j)
                             bestVal = moveVal
+          
+                        # print("checking move: ", (i,j))
+                        # print("value: ", moveVal, "\n")
                        
                         
 
