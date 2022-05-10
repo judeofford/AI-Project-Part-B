@@ -209,7 +209,7 @@ class Player:
             return False
 
         #returns a score value representing how good a given board state is for the player
-        def newHeuristic(self, board):
+        def evaluate(self, board):
             redShortest = 1000
             blueShortest = 1000
             
@@ -258,7 +258,7 @@ class Player:
             elif self.colour == "blue":
                 playerToMin = "red"
 
-            score = newHeuristic(self, board)
+            score = evaluate(self, board)
             
             if isMovesLeft(board, self) == False:
                 return score

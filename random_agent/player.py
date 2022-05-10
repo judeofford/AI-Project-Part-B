@@ -13,6 +13,7 @@ class Player:
         self.colour = player
         self.size = n
         self.board = [[None for i in range(n)] for m in range(n)]
+        self.turnCount = 1
 
     def action(self):
         """
@@ -47,85 +48,99 @@ class Player:
                 if (board[dneighbours[0][0]][dneighbours[0][1]] != board[row][column] and
                 board[dneighbours[1][0]][dneighbours[1][1]] != board[row][column] and
                 board[dneighbours[2][0]][dneighbours[2][1]] == board[row][column]):
-                    print("DIAMOND FOUND\n")
                     for i in range(3):
                         if board[dneighbours[i][0]][dneighbours[i][1]] != board[row][column]:
                             capturearray.append([dneighbours[i][0], dneighbours[i][1]])
-        
-        r = action[1]
-        q = action[2]
-
-        self.board[r][q] = player
 
         #check for diamonds, most nodes have 12 possible diamonds
-        captured = []
+        def checkAllDiamonds(self, board, r, q):
+            captured = []
 
-        #---vertice diamonds---
-        if r+2 < self.size and q-1 > -1:
-            #top vertice
-            neighbours = [[r+1, q-1], [r+1, q], [r+2, q-1]]
-            diamondCheck(neighbours, self.board, r, q, captured)
+            #---vertice diamonds---
+            if r+2 < self.size and q-1 > -1:
+                #top vertice
+                neighbours = [[r+1, q-1], [r+1, q], [r+2, q-1]]
+                diamondCheck(neighbours, board, r, q, captured)
+                
+            if r+1 < self.size and q+1 < self.size:
+                #upper right vertice
+                neighbours = [[r+1, q], [r, q+1], [r+1, q+1]]
+                diamondCheck(neighbours, board, r, q, captured)
+                
+            if q+2 < self.size and r-1 > -1:
+                #lower right vertice
+                neighbours = [[r, q+1], [r-1, q+1], [r-1, q+2]]
+                diamondCheck(neighbours, board, r, q, captured)
+
+            if q+1 < self.size and r-2 > -1:
+                #bottom vertice
+                neighbours = [[r-1, q], [r-1, q+1], [r-2, q+1]]
+                diamondCheck(neighbours, board, r, q, captured)
+                
+            if r-1 > -1 and q-1 > -1:
+                #lower left vertice
+                neighbours = [[r, q-1], [r-1, q], [r-1, q-1]]
+                diamondCheck(neighbours, board, r, q, captured)
+                
+            if r+1 < self.size and q-2 > -1:
+                #upper left vertice
+                neighbours = [[r, q-1], [r+1, q-1], [r+1, q-2]]
+                diamondCheck(neighbours, board, r, q, captured)
+
+
+
+            #---side diamonds---
+            if r+1 < self.size and q+1 < self.size and q-1 > -1:
+                #upper right side
+                neighbours = [[r, q+1], [r+1, q-1], [r+1, q]]
+                diamondCheck(neighbours, board, r, q, captured)
+
+            if q+1 < self.size and r+1 < self.size and r-1 > -1:
+                #right side
+                neighbours = [[r-1, q+1], [r+1, q], [r, q+1]]
+                diamondCheck(neighbours, board, r, q, captured)
+
+            if q+1 < self.size and r-1 > -1:
+                #lower right side
+                neighbours = [[r, q+1], [r-1, q], [r-1, q+1]]
+                diamondCheck(neighbours, board, r, q, captured)
+                
+            if r-1 > -1 and q-1 > -1 and q+1 < self.size:
+                #lower left side
+                neighbours = [[r-1, q+1], [r, q-1], [r-1, q]]
+                diamondCheck(neighbours, board, r, q, captured)
+
+            if r+1 < self.size and r-1 > -1 and q-1 > -1:
+                #left side
+                neighbours = [[r-1, q], [r+1, q-1], [r, q-1]]
+                diamondCheck(neighbours, board, r, q, captured)
+                
+            if r+1 < self.size and q-1 > -1:
+                #upper left side
+                neighbours = [[r+1, q], [r, q-1], [r+1, q-1]]
+                diamondCheck(neighbours, board, r, q, captured)
+
+            return captured
+
+
+        #updates internal board with action
+        if action[0] == "PLACE":
+            r = action[1]
+            q = action[2]
+
+            self.board[r][q] = player
             
-        if r+1 < self.size and q+1 < self.size:
-            #upper right vertice
-            neighbours = [[r+1, q], [r, q+1], [r+1, q+1]]
-            diamondCheck(neighbours, self.board, r, q, captured)
-            
-        if q+2 < self.size and r-1 > -1:
-            #lower right vertice
-            neighbours = [[r, q+1], [r-1, q+1], [r-1, q+2]]
-            diamondCheck(neighbours, self.board, r, q, captured)
+            captured = checkAllDiamonds(self, self.board, r, q)
+            for i in range(len(captured)):
+                self.board[captured[i][0]][captured[i][1]] = None
 
-        if q+1 < self.size and r-2 > -1:
-            #bottom vertice
-            neighbours = [[r-1, q], [r-1, q+1], [r-2, q+1]]
-            diamondCheck(neighbours, self.board, r, q, captured)
-            
-        if r-1 > -1 and q-1 > -1:
-            #lower left vertice
-            neighbours = [[r, q-1], [r-1, q], [r-1, q-1]]
-            diamondCheck(neighbours, self.board, r, q, captured)
-            
-        if r+1 < self.size and q-2 > -1:
-            #upper left vertice
-            neighbours = [[r, q-1], [r+1, q-1], [r+1, q-2]]
-            diamondCheck(neighbours, self.board, r, q, captured)
+        else:
+            for i in range(self.size):
+                for j in range(self.size):
+                    if self.board[i][j] == "red":
+                        self.board[i][j] = None
+                        self.board[j][i] = "blue"
 
-
-
-        #---side diamonds---
-        if r+1 < self.size and q+1 < self.size and q-1 > -1:
-            #upper right side
-            neighbours = [[r, q+1], [r+1, q-1], [r+1, q]]
-            diamondCheck(neighbours, self.board, r, q, captured)
-
-        if q+1 < self.size and r+1 < self.size and r-1 > -1:
-            #right side
-            neighbours = [[r-1, q+1], [r+1, q], [r, q+1]]
-            diamondCheck(neighbours, self.board, r, q, captured)
-
-        if q+1 < self.size and r-1 > -1:
-            #lower right side
-            neighbours = [[r, q+1], [r-1, q], [r-1, q+1]]
-            diamondCheck(neighbours, self.board, r, q, captured)
-            
-        if r-1 > -1 and q-1 > -1 and q+1 < self.size:
-            #lower left side
-            neighbours = [[r-1, q+1], [r, q-1], [r-1, q]]
-            diamondCheck(neighbours, self.board, r, q, captured)
-
-        if r+1 < self.size and r-1 > -1 and q-1 > -1:
-            #left side
-            neighbours = [[r-1, q], [r+1, q-1], [r, q-1]]
-            diamondCheck(neighbours, self.board, r, q, captured)
-            
-        if r+1 < self.size and q-1 > -1:
-            #upper left side
-            neighbours = [[r+1, q], [r, q-1], [r+1, q-1]]
-            diamondCheck(neighbours, self.board, r, q, captured)
-
-
-        for i in range(len(captured)):
-            self.board[captured[i][0]][captured[i][1]] = None
+        self.turnCount = self.turnCount + 1
         
 
